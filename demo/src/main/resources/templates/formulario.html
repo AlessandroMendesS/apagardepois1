@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD Genérico</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        .container { background: #fff; width: 400px; margin: 3em auto; padding: 2em; box-shadow: 0 0 10px #0002; border-radius: 8px; }
+        table { width: 100%; margin-bottom: 1em; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 0.4em; text-align: center; }
+        input { padding: 0.3em; margin: 0.2em 0; width: 95%; }
+        button { padding: 0.4em 1.5em; background: #0066cc; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        .danger { background: #d33; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Cadastro Genérico</h2>
+    <form id="formulario">
+        <input type="hidden" id="registroId">
+        <input type="text" id="campo1" placeholder="Campo 1" required><br>
+        <input type="text" id="campo2" placeholder="Campo 2" required><br>
+        <button type="submit">Salvar</button>
+        <button type="button" onclick="cancelarEdicao()">Cancelar</button>
+    </form>
+
+    <h3>Registros</h3>
+    <table>
+        <thead><tr><th>ID</th><th>Campo 1</th><th>Campo 2</th><th>Ações</th></tr></thead>
+        <tbody id="lista-registros"></tbody>
+    </table>
+</div>
+<script>
+function carregarRegistros() {
+    fetch('/registros').then(res => res.json()).then(data => {
+        let linhas = data.map(r => `<tr><td>${r.id}</td><td>${r.campo1}</td><td>${r.campo2}</td><td><button onclick='editar(${JSON.stringify(r)})'>Editar</button> <button class='danger' onclick='deletar(${r.id})'>Excluir</button></td></tr>`);
+        document.getElementById('lista-registros').innerHTML = linhas.join('');
+    });
+}
+carregarRegistros();
+
+formulario.onsubmit = function(e) {
+    e.preventDefault();
+    const id = registroId.value;
+    const obj = { campo1: campo1.value, campo2: campo2.value };
+    const url = '/registros' + (id ? '/'+id : '');
+    fetch(url, {
+        method: id ? 'PUT':'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(obj)
+    }).then(() => { cancelarEdicao(); carregarRegistros(); });
+};
+function editar(r) {
+    registroId.value = r.id; campo1.value = r.campo1; campo2.value = r.campo2;
+}
+function cancelarEdicao() {
+    registroId.value = ''; formulario.reset();
+}
+function deletar(id) {
+    if(confirm('Excluir?')) {
+        fetch('/registros/'+id, { method: 'DELETE' }).then(() => carregarRegistros());
+    }
+}
+</script>
+</body>
+</html>
